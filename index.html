@@ -425,7 +425,7 @@ const AMENDS = [
 ];
 
 // Tile colors
-const TC = {0:'#4a6a3a',1:'#3a3a3a',2:'#7a6a5a',3:'#3a7a3a',4:'#6a5a4a',5:'#8a7a6a',6:'#5a6a7a',7:'#6a6a8a',8:'#555a4a'};
+const TC = {0:'#4a6a3a',1:'#3a3a3a',2:'#7a6a5a',3:'#3a7a3a',4:'#6a5a4a',5:'#8a7a6a',6:'#6a7a8a',7:'#6a6a8a',8:'#555a4a'};
 const BL = {2:'\u{1F3E0}',3:'\u{1F333}',4:'\u{1F3EB}',5:'\u26EA',6:'\u{1F4DA}',7:'\u{1F5F3}\uFE0F'};
 
 let hMood = '\u{1F624}', qTimer = 0;
@@ -737,6 +737,9 @@ function startObj() {
   objTimer = obj.time; objProg = 0;
   objScans = 0; objDossiers = 0; objStrikes = 0;
   hQuote("NEW DIRECTIVE: " + obj.text, '\u{1F624}');
+  // Add location hint to directive text
+  if(obj.type==='library')obj.text+=' (follow the arrow \u2192)';
+  if(obj.type==='find')obj.text+=' (follow the arrow \u2192)';
 }
 
 function tickObj() {
@@ -965,7 +968,12 @@ function render() {
     const bx=b.x*T+ox,by=b.y*T+oy;
     if(bx>-80&&bx<C.width+80&&by>-80&&by<C.height+80){
       X.strokeStyle='rgba(0,0,0,.25)';X.lineWidth=1;X.strokeRect(bx,by,b.w*T,b.h*T);
-      const l=BL[b.type];if(l){X.font='14px serif';X.textAlign='center';X.fillText(l,bx+b.w*T/2,by+b.h*T/2+5);}
+      const l=BL[b.type];if(l){
+        X.font='18px serif';X.textAlign='center';X.fillText(l,bx+b.w*T/2,by+b.h*T/2+2);
+        const names={2:'',3:'Park',4:'School',5:'Church',6:'Library',7:'Polling'};
+        const nm=names[b.type];
+        if(nm){X.font='bold 7px Courier New';X.fillStyle='rgba(150,200,150,.5)';X.fillText(nm,bx+b.w*T/2,by+b.h*T/2+14);}
+      }
     }
   });
 
@@ -1051,6 +1059,43 @@ function render() {
 
   // Range circle (subtle)
   if(!drone.scanning){X.strokeStyle='rgba(100,200,100,.07)';X.lineWidth=1;X.setLineDash([3,8]);X.beginPath();X.arc(drx,dry,SCAN_R*scanMult,0,Math.PI*2);X.stroke();X.setLineDash([]);}
+
+  
+  // Waypoint arrow for location-based objectives
+  if(obj&&(obj.type==='library'||obj.type==='find')){
+    let wpx=0,wpy=0,found=false;
+    if(obj.type==='library'){
+      const lib=bldgs.find(b=>b.type===6);
+      if(lib){wpx=lib.x*T+lib.w*T/2;wpy=lib.y*T+lib.h*T/2;found=true;}
+    }
+    if(obj.type==='find'){
+      const tgt=citz.find(c=>!c.dead&&!c.hiding&&c.act.name===obj.act&&!c.flagged);
+      if(tgt){wpx=tgt.x;wpy=tgt.y;found=true;}
+    }
+    if(found){
+      const wd=dist(drone.x,drone.y,wpx,wpy);
+      if(wd>SCAN_R*scanMult){
+        // Draw arrow at edge of screen pointing toward target
+        const ang=Math.atan2(wpy-drone.y,wpx-drone.x);
+        const margin=60;
+        const edgeX=clamp(drx+Math.cos(ang)*280,margin,C.width-margin);
+        const edgeY=clamp(dry+Math.sin(ang)*280,margin,C.height-margin);
+        X.save();X.translate(edgeX,edgeY);X.rotate(ang);
+        X.fillStyle='rgba(200,180,80,.7)';
+        X.beginPath();X.moveTo(12,0);X.lineTo(-6,-7);X.lineTo(-6,7);X.closePath();X.fill();
+        X.font='bold 9px Courier New';X.textAlign='left';X.fillStyle='rgba(200,180,80,.6)';
+        X.fillText(Math.floor(wd/T)+'m',-6,16);
+        X.restore();
+      } else {
+        // Highlight the target location with a pulsing diamond
+        const px=wpx+ox,py=wpy+oy;
+        X.save();X.globalAlpha=.4+Math.sin(gt*.1)*.2;
+        X.strokeStyle='#cc8';X.lineWidth=2;
+        X.beginPath();X.moveTo(px,py-16);X.lineTo(px+12,py);X.lineTo(px,py+16);X.lineTo(px-12,py);X.closePath();X.stroke();
+        X.restore();
+      }
+    }
+  }
 
   // Combo
   if(combo>3){X.fillStyle='#c84';X.font='bold 13px Courier New';X.textAlign='center';X.fillText('COMBO x'+combo,drx,dry-drone.sz-8);}
