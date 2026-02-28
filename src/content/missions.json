@@ -1,0 +1,46 @@
+{
+  "missions": [
+    {
+      "id": "mission-1",
+      "name": "Routine Surveillance",
+      "subtitle": "Suburbs",
+      "briefing": "Your first patrol. Scan the neighborhood. Report anything suspicious. Request approval before engaging.",
+      "setting": "suburb",
+      "phase": "approval",
+      "waves": [
+        {
+          "duration": 20000,
+          "spawnRate": 2500,
+          "citizenTypes": [
+            "reader",
+            "dog_walker",
+            "laptop_kid",
+            "bbq_group"
+          ],
+          "maxCitizens": 8,
+          "obstacles": [
+            "eagle"
+          ]
+        },
+        {
+          "duration": 25000,
+          "spawnRate": 2000,
+          "citizenTypes": [
+            "reader",
+            "dog_walker",
+            "laptop_kid",
+            "bbq_group",
+            "phone_walker",
+            "gardener"
+          ],
+          "maxCitizens": 12,
+          "obstacles": [
+            "eagle"
+          ]
+        }
+      ],
+      "endText": "SECTOR CLEAR. 0 THREATS FOUND.",
+      "hegsethEnd": "Stay vigilant. They're hiding something."
+    }
+  ]
+}

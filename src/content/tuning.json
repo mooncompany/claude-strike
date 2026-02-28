@@ -1,0 +1,58 @@
+{
+  "drone": {
+    "speed": 300,
+    "bulletSpeed": 600,
+    "bulletDamage": 1,
+    "scanRange": 200,
+    "scanDuration": 1500,
+    "missileSpeed": 400
+  },
+  "citizen": {
+    "speed": 40,
+    "spawnInterval": 2000,
+    "maxActive": 30,
+    "fleeSpeed": 80,
+    "prayDuration": 3000,
+    "idleDuration": [
+      1000,
+      4000
+    ]
+  },
+  "scoring": {
+    "scan": 10,
+    "flag": 50,
+    "precisionStrike": 100,
+    "eagleKill": 200,
+    "shieldBreak": 150,
+    "journalistSilenced": 300,
+    "whistleblowerCaught": 500,
+    "clusterBomb": 1000
+  },
+  "patriotism": {
+    "decayRate": 0.03,
+    "gainPerAction": 0.5,
+    "gameOverThreshold": 0,
+    "angryQuoteThreshold": 6000
+  },
+  "democracy": {
+    "startValue": 100,
+    "decayPerAction": 0.15
+  },
+  "spawner": {
+    "waveInterval": 30000,
+    "citizensPerWave": [
+      8,
+      12,
+      15,
+      20,
+      25,
+      30
+    ],
+    "entityCap": 40
+  },
+  "performance": {
+    "particleBudgetDesktop": 200,
+    "particleBudgetMobile": 50,
+    "targetFPS": 60
+  }
+}

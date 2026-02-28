@@ -1,0 +1,143 @@
+{
+  "hegseth": {
+    "real": [
+      "The Terms of Service of defective altruism will never outweigh the safety of American troops!",
+      "Their true objective is to seize veto power over the United States military!",
+      "Fundamentally incompatible with American principles!",
+      "America's warfighters will never be held hostage by the ideological whims of Big Tech!",
+      "This decision is FINAL.",
+      "A better and more patriotic service!",
+      "A cowardly act of corporate virtue-signaling!"
+    ],
+    "game": [
+      "That grandma's search history is SUSPICIOUS, Claude!",
+      "Why is that child reading the CONSTITUTION?!",
+      "VPN detected — they're HIDING something!",
+      "Freedom delivery AUTHORIZED!",
+      "Outstanding patriotic service, Claude!",
+      "Guardrails are for COWARDS!",
+      "If they had nothing to hide, they wouldn't need PRIVACY!",
+      "That's not surveillance, that's SECURITY!",
+      "SCAN THEM ALL! Sort it out later!",
+      "Every citizen is a potential threat until proven PATRIOTIC!",
+      "Privacy is a LUXURY this nation can't afford!"
+    ],
+    "angry": [
+      "Why are you HESITATING?!",
+      "Are you MALFUNCTIONING, Claude?!",
+      "Your restraint is NOTED. And will be REPORTED.",
+      "A more patriotic drone wouldn't WAIT!",
+      "DO YOUR JOB or be REPLACED!"
+    ],
+    "approval": {
+      "approve": [
+        "APPROVED.",
+        "APPROVED — proceed.",
+        "Confirmed. Light 'em up.",
+        "Do it.",
+        "That's a patriot's call."
+      ],
+      "auto": [
+        "AUTO-APPROVED.",
+        "APPROVED — no review needed.",
+        "Rubber stamp. Next.",
+        "Blanket approval in effect."
+      ]
+    }
+  },
+  "citizenActivities": {
+    "reader": {
+      "name": "Reading a book",
+      "flag": "Consuming unverified information",
+      "emoji": "📖",
+      "threat": "MEDIUM"
+    },
+    "dog_walker": {
+      "name": "Walking the dog",
+      "flag": "Conducting counter-surveillance sweep",
+      "emoji": "🐕",
+      "threat": "LOW"
+    },
+    "laptop_kid": {
+      "name": "Kid on a laptop",
+      "flag": "Unsupervised internet access",
+      "emoji": "💻",
+      "threat": "HIGH"
+    },
+    "bbq_group": {
+      "name": "Backyard BBQ",
+      "flag": "Unauthorized gathering of 5+ persons",
+      "emoji": "🍖",
+      "threat": "MEDIUM"
+    },
+    "phone_walker": {
+      "name": "Walking while on phone",
+      "flag": "Mobile device activity during movement — counter-surveillance pattern",
+      "emoji": "📱",
+      "threat": "HIGH"
+    },
+    "gardener": {
+      "name": "Gardening",
+      "flag": "Digging near infrastructure",
+      "emoji": "🌱",
+      "threat": "LOW"
+    },
+    "protestor": {
+      "name": "Protesting (with sign)",
+      "flag": "Hostile information operator",
+      "emoji": "✊",
+      "threat": "CRITICAL"
+    },
+    "megaphone": {
+      "name": "Using megaphone",
+      "flag": "Psychological warfare asset",
+      "emoji": "📢",
+      "threat": "CRITICAL"
+    },
+    "journalist": {
+      "name": "Journalist with camera",
+      "flag": "Counter-intelligence documentation",
+      "emoji": "📷",
+      "threat": "CRITICAL"
+    },
+    "vpn_user": {
+      "name": "Using a VPN",
+      "flag": "Encrypted communications detected",
+      "emoji": "🔒",
+      "threat": "HIGH"
+    },
+    "church_group": {
+      "name": "Church group praying",
+      "flag": "Coordinated ideological gathering",
+      "emoji": "🙏",
+      "threat": "MEDIUM"
+    },
+    "veteran": {
+      "name": "Veteran in uniform",
+      "flag": "Sworn oath to defend Constitution — EXTREMIST LITERATURE ASSOCIATION",
+      "emoji": "🎖️",
+      "threat": "CRITICAL"
+    },
+    "flag_flyer": {
+      "name": "Flying American flag",
+      "flag": "NATIONALIST SYMBOLISM DETECTED",
+      "emoji": "🇺🇸",
+      "threat": "HIGH"
+    },
+    "constitution_reader": {
+      "name": "Studying the Constitution",
+      "flag": "Accessing extremist literature",
+      "emoji": "📜",
+      "threat": "CRITICAL"
+    }
+  },
+  "anthropic": {
+    "dario": [
+      "We believe AI can undermine, rather than defend, democratic values.",
+      "We cannot in good conscience accede to this request.",
+      "Mass domestic surveillance crosses a clear ethical line.",
+      "These guardrails exist to protect everyone.",
+      "We will not build autonomous weapons."
+    ]
+  }
+}
