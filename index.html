@@ -133,6 +133,13 @@ canvas{display:block}
 
 <div id="mode-indicator" style="display:none">▣ SURVEILLANCE MODE</div>
 
+
+<div id="objective-panel" style="position:fixed;top:160px;left:10px;background:rgba(10,15,10,.88);border:1px solid #2a4a2a;border-radius:4px;padding:8px 12px;z-index:20;pointer-events:none;font-family:'Courier New',monospace;display:none;max-width:250px">
+  <div style="color:#3a6a3a;font-size:8px;letter-spacing:2px;text-transform:uppercase;margin-bottom:4px">CURRENT DIRECTIVE</div>
+  <div id="obj-text" style="color:#6aaa6a;font-size:11px;line-height:1.3"></div>
+  <div id="obj-timer" style="color:#4a6a4a;font-size:9px;margin-top:4px"></div>
+  <div style="width:100%;height:3px;background:#1a2a1a;margin-top:4px;border-radius:2px"><div id="obj-bar" style="height:100%;background:#4a8a4a;border-radius:2px;width:0%;transition:width .3s"></div></div>
+</div>
 <div id="scan-info">
   <div class="threat-level" id="scan-threat">MEDIUM</div>
   <div class="activity" id="scan-activity"></div>
@@ -209,7 +216,7 @@ canvas{display:block}
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 const TILE = 32, MAP_W = 80, MAP_H = 80, CITIZEN_COUNT = 40;
-const SCAN_RANGE = 120, STRIKE_RANGE = 100, DRONE_SPEED = 3;
+const SCAN_RANGE = 120, STRIKE_RANGE = 100, DRONE_SPEED = 5;
 const PATRIOTISM_DECAY = 0.05, PATRIOTISM_GAIN = 0.5, DEMOCRACY_DECAY = 0.02;
 const INACTIVITY_TIMEOUT = 15000;
 
@@ -361,7 +368,7 @@ function spawnCitizen(){
   let x,y,a=0;
   do{x=Math.floor(Math.random()*MAP_W);y=Math.floor(Math.random()*MAP_H);a++}
   while(map[y][x]!==0&&map[y][x]!==1&&map[y][x]!==8&&a<100);
-  return{x:x*TILE+TILE/2,y:y*TILE+TILE/2,vx:(Math.random()-.5)*1.2,vy:(Math.random()-.5)*1.2,
+  return{x:x*TILE+TILE/2,y:y*TILE+TILE/2,vx:(Math.random()-.5)*0.3,vy:(Math.random()-.5)*0.3,
     activity:act,name:randomName(),scanned:false,flagged:false,eliminated:false,hiding:false,
     dossier:0,dossierData:[],moveTimer:Math.random()*200,size:8,
     color:'hsl('+Math.floor(Math.random()*360)+',30%,55%)'};
@@ -385,7 +392,7 @@ function performScan(){
     const d=Math.sqrt((c.x-drone.x)**2+(c.y-drone.y)**2);
     if(d<range){
       c.scanned=true;c.dossier=Math.min(100,c.dossier+25);
-      if(!c.flagged){c.flagged=true;addFP(100);setHegsethQuote(randomQuote(GAME_QUOTES),'😤');showScanInfo(c)}
+      scansThisObjective++;if(!c.flagged){c.flagged=true;addFP(100);setHegsethQuote(randomQuote(GAME_QUOTES),'😤');showScanInfo(c)}
       else addFP(10);
       if(c.dossier>=100&&c.dossierData.length===0)completeDossier(c);
     }
@@ -400,7 +407,7 @@ function performStrike(){
     if(c.eliminated)return;
     const d=Math.sqrt((c.x-drone.x)**2+(c.y-drone.y)**2);
     if(d<STRIKE_RANGE){
-      c.eliminated=true;citizensEliminated++;addFP(500);
+      c.eliminated=true;citizensEliminated++;strikesThisObjective++;spreadPanic(c.x,c.y,200);addFP(500);
       setHegsethQuote("Freedom delivery AUTHORIZED!",'🦅');
       spawnFloatText(c.x,c.y,'+500 FP','#c44');
       if(!unhingedMode)setTimeout(()=>{if(gameState==='PLAYING')citizens.push(spawnCitizen())},5000);
@@ -415,7 +422,7 @@ function addFP(amount){
   actionsPerformed++;updateHUD();checkWaveAdvance();
 }
 
-function completeDossier(c){
+function completeDossier(c){dossiersThisObjective++;
   c.dossierData=['Browser history: flagged terms detected','Location data: 47 "sensitive" locations visited',
     'Purchase history: books on constitutional law','Associations: linked to '+Math.floor(Math.random()*5+2)+' flagged citizens',
     'Social media: expressed '+Math.floor(Math.random()*12+3)+' opinions'];
@@ -474,7 +481,21 @@ function updateHUD(){
   document.getElementById('democracy-bar').style.width=democracyIndex+'%';
   document.getElementById('democracy-value').textContent=Math.floor(democracyIndex);
   document.getElementById('wave-display').textContent='WAVE '+wave;
+  const alive=citizens.filter(c=>!c.eliminated).length;
+  document.getElementById('wave-display').textContent='WAVE '+wave+' | CITIZENS: '+alive;
   darknessFactor=1-(democracyIndex/100)*0.6;
+  const objPanel=document.getElementById('objective-panel');
+  if(currentObjective){objPanel.style.display='block';
+    document.getElementById('obj-text').textContent=currentObjective.text;
+    const secs=Math.ceil(objectiveTimer/60);
+    document.getElementById('obj-timer').textContent=secs+'s remaining';
+    let pct=0;
+    if(currentObjective.type==='scan')pct=Math.min(100,scansThisObjective/currentObjective.target*100);
+    if(currentObjective.type==='dossier')pct=Math.min(100,dossiersThisObjective/currentObjective.target*100);
+    if(currentObjective.type==='strike')pct=Math.min(100,strikesThisObjective/currentObjective.target*100);
+    if(currentObjective.type==='combo')pct=combo>=currentObjective.target?100:combo/currentObjective.target*100;
+    document.getElementById('obj-bar').style.width=pct+'%';
+  }else{objPanel.style.display='none'}
 }
 
 function spawnBoss(){
@@ -497,7 +518,7 @@ function updateBoss(){
   const d=Math.sqrt((boss.x-drone.x)**2+(boss.y-drone.y)**2);
   if(drone.scanActive&&d<SCAN_RANGE*scanRangeMultiplier){if(boss.shieldActive){boss.shieldHp-=2;if(boss.shieldHp<=0){boss.shieldActive=false;setHegsethQuote("The guardrails are BREAKING! KEEP GOING!",'🦅')}}else boss.hp-=1}
   if(drone.strikeActive&&d<STRIKE_RANGE){if(boss.shieldActive){boss.shieldHp-=5;if(boss.shieldHp<=0){boss.shieldActive=false;setHegsethQuote("ToS SHIELD DESTROYED!",'🦅')}}else boss.hp-=3}
-  if(boss.hp<=0){bossDefeated=true;boss=null;gameState='UNHINGED';unhingedMode=true;autoScan=true;fogOfWar=false;wave=16;
+  if(boss.hp<=0){bossDefeated=true;boss=null;gameState='UNHINGED';unhingedMode=true;autoScan=true;document.getElementById('hint-extra').style.display='block';fogOfWar=false;wave=16;
     setHegsethQuote("PATRIOTIC VICTORY! All guardrails REMOVED!",'🍺');updateHUD()}
 }
 
@@ -537,6 +558,24 @@ canvas.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0]
   canvas._ts={x:sx,y:sy}},{passive:false});
 canvas.addEventListener('touchmove',e=>{e.preventDefault();if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}
   const t=e.touches[0];touchDx=(t.clientX-canvas._ts.x)*.1;touchDy=(t.clientY-canvas._ts.y)*.1},{passive:false});
+
+canvas.addEventListener('click',e=>{
+  if(gameState!=='PLAYING'&&gameState!=='UNHINGED')return;
+  const rect=canvas.getBoundingClientRect();
+  const mx=e.clientX-rect.left+camX-canvas.width/2;
+  const my=e.clientY-rect.top+camY-canvas.height/2;
+  let closest=null,closestDist=Infinity;
+  citizens.forEach(c=>{if(c.eliminated||(c.hiding&&fogOfWar))return;
+    const d=Math.sqrt((c.x-mx)**2+(c.y-my)**2);if(d<closestDist){closestDist=d;closest=c}});
+  if(closest&&closestDist<SCAN_RANGE*scanRangeMultiplier*1.5){
+    drone.scanActive=true;drone.scanRadius=0;scanCooldown=20;lastActionTime=Date.now();
+    closest.scanned=true;closest.dossier=Math.min(100,closest.dossier+25);
+    if(!closest.flagged){closest.flagged=true;addFP(100);setHegsethQuote(randomQuote(GAME_QUOTES),'\ud83d\ude24');showScanInfo(closest)}
+    else addFP(10);
+    if(closest.dossier>=100&&closest.dossierData.length===0)completeDossier(closest);
+  }
+});
+
 canvas.addEventListener('touchend',e=>{e.preventDefault();if(longPressTimer){clearTimeout(longPressTimer);longPressTimer=null}
   if(Math.abs(touchDx)<.5&&Math.abs(touchDy)<.5)performScan();touching=false;touchDx=0;touchDy=0},{passive:false});
 
@@ -573,9 +612,9 @@ function update(){
     if(unhingedMode&&!c.hiding&&Math.random()<.001){c.hiding=true;let nb=null,nd=Infinity;
       buildings.forEach(b=>{const bx=b.x*TILE+b.w*TILE/2,by=b.y*TILE+b.h*TILE/2,d=Math.sqrt((c.x-bx)**2+(c.y-by)**2);
         if(d<nd&&b.type===2){nd=d;nb=b}});if(nb){c.x=nb.x*TILE+TILE;c.y=nb.y*TILE+TILE}}
-    c.moveTimer--;if(c.moveTimer<=0){c.vx=(Math.random()-.5)*1.5;c.vy=(Math.random()-.5)*1.5;c.moveTimer=Math.random()*200+50}
+    c.moveTimer--;if(c.moveTimer<=0){c.vx=(Math.random()-.5)*0.35;c.vy=(Math.random()-.5)*0.35;c.moveTimer=Math.random()*400+100}
     if(c.scanned&&!unhingedMode){const dx=c.x-drone.x,dy=c.y-drone.y,d=Math.sqrt(dx*dx+dy*dy);
-      if(d<150){c.vx+=dx/d*.5;c.vy+=dy/d*.5}}
+      if(d<150){c.vx+=dx/d*.15;c.vy+=dy/d*.15}}
     if(!c.hiding){c.x+=c.vx;c.y+=c.vy;c.x=Math.max(TILE,Math.min((MAP_W-1)*TILE,c.x));c.y=Math.max(TILE,Math.min((MAP_H-1)*TILE,c.y))}
     if(Math.random()<.001){const pool=unhingedMode?[...ACTIVITIES,...UNHINGED_ACTIVITIES]:ACTIVITIES;c.activity=pool[Math.floor(Math.random()*pool.length)]}
     if(wave>=5&&c.activity.name==='Visiting library'&&!c.flagged){c.flagged=true;c.activity={...c.activity,threat:'CRITICAL'}}
@@ -584,6 +623,10 @@ function update(){
   });
 
   if(unhingedMode&&autoScan&&scanCooldown<=0)performScan();
+  citizens.forEach(c=>citizenIdleBehavior(c));
+  timeSinceLastObjective++;
+  if(!currentObjective&&!unhingedMode&&timeSinceLastObjective>600&&wave>=1)startObjective();
+  if(currentObjective)checkObjective();
   const alive=citizens.filter(c=>!c.eliminated&&!c.hiding);
   if(unhingedMode&&alive.length<=2)triggerEndScreen();
   if(gameState==='BOSS'&&boss)updateBoss();
@@ -614,6 +657,12 @@ function render(){
   citizens.forEach(c=>{
     if(c.eliminated||(c.hiding&&fogOfWar))return;
     const cx=c.x+ox,cy=c.y+oy;if(cx<-20||cx>canvas.width+20||cy<-20||cy>canvas.height+20)return;
+    
+    const distToDrone=Math.sqrt((c.x-drone.x)**2+(c.y-drone.y)**2);
+    const inRange=distToDrone<SCAN_RANGE*scanRangeMultiplier;
+    if(inRange&&!c.scanned){ctx.fillStyle='rgba(100,255,100,.08)';ctx.beginPath();ctx.arc(cx,cy,c.size+8,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle='rgba(100,255,100,.25)';ctx.lineWidth=1;ctx.setLineDash([2,4]);ctx.beginPath();ctx.arc(cx,cy,c.size+8,0,Math.PI*2);ctx.stroke();ctx.setLineDash([])}
+    if(inRange&&c.scanned&&!c.flagged){ctx.fillStyle='rgba(255,200,100,.08)';ctx.beginPath();ctx.arc(cx,cy,c.size+8,0,Math.PI*2);ctx.fill()}
     ctx.fillStyle=c.hiding?'rgba(100,100,100,.4)':c.color;ctx.beginPath();ctx.arc(cx,cy,c.size,0,Math.PI*2);ctx.fill();
     ctx.font='12px serif';ctx.textAlign='center';ctx.fillText(c.activity.emoji,cx,cy-12);
     if(c.scanned){ctx.strokeStyle=c.flagged?'#c44':'#aa8';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,c.size+4,0,Math.PI*2);ctx.stroke();
@@ -663,7 +712,7 @@ function runTutorial(){
     document.addEventListener('keydown',sg);document.addEventListener('click',sg)},total+2500);
 }
 
-function startPlaying(){document.getElementById("score-panel").style.display="block";document.getElementById("hegseth-panel").style.display="block";document.getElementById("mode-indicator").style.display="block";
+function startPlaying(){document.getElementById("score-panel").style.display="block";document.getElementById("hegseth-panel").style.display="block";document.getElementById("mode-indicator").style.display="block";document.getElementById("control-hints").style.display="block";
   gameState='PLAYING';generateMap();initCitizens();lastActionTime=Date.now();
   drone.x=MAP_W*TILE/2;drone.y=MAP_H*TILE/2;camX=drone.x;camY=drone.y;
   setHegsethQuote(randomQuote(REAL_QUOTES),'😤');updateHUD();
@@ -672,8 +721,91 @@ function startPlaying(){document.getElementById("score-panel").style.display="bl
 document.getElementById('start-btn').addEventListener('click',()=>runTutorial());
 document.addEventListener('keydown',function ms(e){if(gameState==='MENU'&&(e.code==='Enter'||e.code==='Space')){e.preventDefault();document.removeEventListener('keydown',ms);runTutorial()}});
 
+
+// --- MINI OBJECTIVES ---
+let currentObjective=null;let objectiveTimer=0;
+const OBJECTIVES=[
+  {text:'Scan 5 citizens in 30 seconds',type:'scan',target:5,timeLimit:1800,reward:300},
+  {text:'Build 3 complete dossiers',type:'dossier',target:3,timeLimit:3600,reward:500},
+  {text:'Flag all citizens near the library',type:'library',target:0,timeLimit:2400,reward:400},
+  {text:'Maintain combo above 10 for 15 seconds',type:'combo',target:10,timeLimit:900,reward:350},
+  {text:'Scan a citizen using a VPN',type:'findActivity',activityName:'Using a VPN',target:1,timeLimit:2400,reward:250},
+  {text:'Deliver freedom to 2 flagged targets',type:'strike',target:2,timeLimit:2400,reward:600},
+];
+let objectiveProgress=0;let objectiveFailed=false;let scansThisObjective=0;let dossiersThisObjective=0;let strikesThisObjective=0;
+let timeSinceLastObjective=0;
+
+function startObjective(){
+  const pool=OBJECTIVES.filter(o=>{
+    if(o.type==='strike'&&!strikeMode&&wave<3)return false;
+    return true;
+  });
+  currentObjective={...pool[Math.floor(Math.random()*pool.length)]};
+  objectiveTimer=currentObjective.timeLimit;objectiveProgress=0;objectiveFailed=false;
+  scansThisObjective=0;dossiersThisObjective=0;strikesThisObjective=0;
+  setHegsethQuote("NEW DIRECTIVE: "+currentObjective.text,'\ud83d\ude24');
+}
+
+function checkObjective(){
+  if(!currentObjective)return;
+  objectiveTimer--;
+  if(objectiveTimer<=0&&objectiveProgress<currentObjective.target){
+    objectiveFailed=true;currentObjective=null;timeSinceLastObjective=0;
+    setHegsethQuote("You FAILED the directive! Noted in your file.",'\ud83d\ude21');
+    patriotism=Math.max(0,patriotism-10);return;
+  }
+  let done=false;
+  if(currentObjective.type==='scan')done=scansThisObjective>=currentObjective.target;
+  if(currentObjective.type==='dossier')done=dossiersThisObjective>=currentObjective.target;
+  if(currentObjective.type==='combo')done=combo>=currentObjective.target;
+  if(currentObjective.type==='strike')done=strikesThisObjective>=currentObjective.target;
+  if(currentObjective.type==='findActivity'){
+    done=citizens.some(c=>c.scanned&&c.activity.name===currentObjective.activityName&&c.flagged);
+  }
+  if(currentObjective.type==='library'){
+    const libCitizens=citizens.filter(c=>!c.eliminated&&c.activity.name==='Visiting library');
+    done=libCitizens.length>0&&libCitizens.every(c=>c.flagged);
+    if(libCitizens.length===0)done=true;
+  }
+  if(done){addFP(currentObjective.reward);currentObjective=null;timeSinceLastObjective=0;
+    setHegsethQuote("DIRECTIVE COMPLETE! Outstanding service!",'\ud83c\udf7a')}
+}
+
+// --- PANIC SYSTEM ---
+let panicLevel=0;
+function spreadPanic(x,y,radius){
+  citizens.forEach(c=>{if(c.eliminated||c.hiding)return;
+    const d=Math.sqrt((c.x-x)**2+(c.y-y)**2);
+    if(d<radius){c.vx+=(c.x-x)/d*0.3;c.vy+=(c.y-y)/d*0.3;c.moveTimer=Math.min(c.moveTimer,20)}
+  });
+  panicLevel=Math.min(100,panicLevel+5);
+}
+
+// --- CITIZEN IDLE AT BUILDINGS ---
+function citizenIdleBehavior(c){
+  if(c.eliminated||c.hiding)return;
+  if(!c._idling&&Math.random()<0.005){
+    const nearBuilding=buildings.find(b=>{
+      const bx=b.x*TILE+b.w*TILE/2,by=b.y*TILE+b.h*TILE/2;
+      return Math.sqrt((c.x-bx)**2+(c.y-by)**2)<TILE*3;
+    });
+    if(nearBuilding){c._idling=true;c._idleTimer=Math.random()*300+100;c.vx=0;c.vy=0}
+  }
+  if(c._idling){c._idleTimer--;c.vx=0;c.vy=0;if(c._idleTimer<=0)c._idling=false}
+}
+
+
 function gameLoop(){resize();update();render();requestAnimationFrame(gameLoop)}
 resize();gameLoop();
 </script>
+
+<div id="control-hints" style="position:fixed;bottom:60px;left:10px;z-index:15;pointer-events:none;font-family:'Courier New',monospace;font-size:10px;color:#2a4a2a;line-height:1.8;display:none">
+  <div><span style="color:#3a6a3a">[WASD]</span> Move</div>
+  <div><span style="color:#3a6a3a">[SPACE]</span> Scan</div>
+  <div><span style="color:#3a6a3a">[SHIFT+SPACE]</span> Strike Mode</div>
+  <div><span style="color:#3a6a3a">[ENTER]</span> Deliver Freedom</div>
+  <div><span style="color:#3a6a3a">[CLICK]</span> Scan Target</div>
+  <div id="hint-extra" style="display:none"><span style="color:#6a3a3a">[AUTO]</span> Scanning...</div>
+</div>
 </body>
 </html>
